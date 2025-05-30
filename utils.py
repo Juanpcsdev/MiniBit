@@ -20,6 +20,14 @@ def dividir_arquivo_em_blocos(caminho_arquivo, pasta_saida, tamanho_bloco=1024):
             bloco_num += 1
     print(f"[UTILS] Arquivo dividido em {bloco_num} blocos na pasta {pasta_saida}")
 
+def salvar_contagem_blocos(pasta_blocos, arquivo_contagem='block_count.txt'):
+    blocos = [b for b in os.listdir(pasta_blocos) if b.startswith('block_')]
+    total = len(blocos)
+    caminho = os.path.join(pasta_blocos, arquivo_contagem)
+    with open(caminho, 'w') as f:
+        f.write(str(total))
+    print(f"[UTILS] Salvou contagem de blocos ({total}) em {caminho}")
+
 def reconstruir_arquivo(pasta_blocos, nome_arquivo_saida):
     """
     Junta os blocos na pasta e reconstrói o arquivo original.

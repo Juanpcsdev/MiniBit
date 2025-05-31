@@ -4,7 +4,7 @@ import sys
 import os
 import signal
 
-NUM_PEERS = 4  # número total de peers (incluindo o peer 0)
+NUM_PEERS = 5  # total de peers (incluindo peer 0)
 
 def run_command(cmd, wait=True):
     print(f"[RUN] Executando: {' '.join(cmd)}")
@@ -14,23 +14,24 @@ def run_command(cmd, wait=True):
     return proc
 
 def main():
-    # Passo 1: Peer 0 divide o arquivo (gera blocos)
-    print("[RUN] Passo 1: Peer 0 dividindo arquivo original...")
-    run_command([sys.executable, 'peer.py', '0'])
+    # Passo 1: Peer 0 divide o arquivo, mas NÃO finaliza (rodando em background)
+    print("[RUN] Passo 1: Peer 0 iniciando e dividindo arquivo...")
+    peer0_proc = run_command([sys.executable, 'peer.py', '0'], wait=False)
+    time.sleep(5)  # espera peer 0 criar blocos e começar a rodar
 
     # Passo 2: Distribui blocos para peers (exceto peer 0)
     print("[RUN] Passo 2: Distribuindo blocos para peers...")
-    run_command([sys.executable, 'dist_block.py'])
+    run_command([sys.executable, 'dist_block.py'])  # espera terminar
 
     # Passo 3: Inicia tracker
     print("[RUN] Passo 3: Iniciando tracker...")
     tracker_proc = run_command([sys.executable, 'tracker.py'], wait=False)
-    time.sleep(1)  # espera tracker iniciar
+    time.sleep(2)  # espera tracker iniciar
 
-    # Passo 4: Inicia todos os peers (0,1,2,...)
-    print("[RUN] Passo 4: Iniciando peers...")
-    peer_procs = []
-    for peer_id in range(NUM_PEERS):
+    # Passo 4: Inicia peers 1,2,... (peer 0 já iniciado)
+    print("[RUN] Passo 4: Iniciando peers restantes...")
+    peer_procs = [peer0_proc]
+    for peer_id in range(1, NUM_PEERS):
         proc = run_command([sys.executable, 'peer.py', str(peer_id)], wait=False)
         peer_procs.append(proc)
         time.sleep(1)

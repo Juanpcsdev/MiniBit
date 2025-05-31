@@ -32,7 +32,7 @@ class Peer:
         while attempts < max_retries:
             try:
                 if self.peer_id == 0:
-                    blocos = [f for f in os.listdir(self.bloco_dir) if f.startswith('block_')]
+                    blocos = [f for f in os.listdir(self.bloco_dir) if f.startswith('block_') and f != 'block_count.txt']
                     total = len(blocos)
                     salvar_contagem_blocos(self.bloco_dir)
                     self.BLOCKS_TOTAL = total
@@ -63,7 +63,7 @@ class Peer:
         while attempts < max_retries:
             if not os.path.exists(self.bloco_dir):
                 os.makedirs(self.bloco_dir)
-            blocos = [f for f in os.listdir(self.bloco_dir) if f.startswith('block_')]
+            blocos = [f for f in os.listdir(self.bloco_dir) if f.startswith('block_') and f != 'block_count.txt']
             if blocos:
                 self.blocks = set(blocos)
                 gerar_log(f"[Peer {self.peer_id}] Carregou {len(self.blocks)} blocos locais.")
@@ -337,8 +337,11 @@ class Peer:
                 blocks_total = self.BLOCKS_TOTAL
 
             if blocks_count == blocks_total:
-                gerar_log(f"[Peer {self.peer_id}] Arquivo completo! Encerrando...")
-                break
+                if self.peer_id != 0:
+                    gerar_log(f"[Peer {self.peer_id}] Arquivo completo! Encerrando...")
+                    break
+                else:
+                    gerar_log(f"[Peer {self.peer_id}] Arquivo completo, permanecendo online para servir os blocos.")
 
             if not self.register_to_tracker():
                 gerar_log(f"[Peer {self.peer_id}] Não conseguiu conectar tracker, tentando novamente...")

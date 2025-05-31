@@ -1,12 +1,13 @@
-with open('arquivo.txt', 'w') as f:
-    base_text = """MiniBit - Sistema de Compartilhamento Cooperativo de Arquivos
+iniBit.
 
-Este arquivo serve como exemplo para a implementação do MiniBit,
-um sistema distribuído inspirado no BitTorrent, para dividir,
-compartilhar e reconstruir arquivos usando estratégias como
+MiniBit - Sistema de Compartilhamento Cooperativo de Arquivos
+
+Este arquivo serve como exemplo para a implementa  o do MiniBit,
+um sistema distribu do inspirado no BitTorrent, para dividir,
+compartilhar e reconstruir arquivos usando estrat gias como
 rarest first e tit-for-tat simplificado.
 
-O conteúdo deste arquivo é fictício e serve apenas para teste
+O conte do deste arquivo   fict cio e serve apenas para teste
 do sistema, dividindo em blocos de 1024 bytes.
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
@@ -20,8 +21,3 @@ occaecat cupidatat non proident, sunt in culpa qui officia
 deserunt mollit anim id est laborum.
 
 Fim do arquivo de teste MiniBit.
-
-"""
-
-    for _ in range(1000):  # Repete o texto 1000 vezes para aumentar o tamanho
-        f.write(base_text)

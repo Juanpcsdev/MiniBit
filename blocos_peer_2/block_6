@@ -1,0 +1,25 @@
+ irure dolor in reprehenderit in voluptate velit
+esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
+occaecat cupidatat non proident, sunt in culpa qui officia
+deserunt mollit anim id est laborum.
+
+Fim do arquivo de teste MiniBit.
+
+MiniBit - Sistema de Compartilhamento Cooperativo de Arquivos
+
+Este arquivo serve como exemplo para a implementa  o do MiniBit,
+um sistema distribu do inspirado no BitTorrent, para dividir,
+compartilhar e reconstruir arquivos usando estrat gias como
+rarest first e tit-for-tat simplificado.
+
+O conte do deste arquivo   fict cio e serve apenas para teste
+do sistema, dividindo em blocos de 1024 bytes.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
+do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+Ut enim ad minim veniam, quis nostrud exercitation ullamco
+laboris nisi ut aliquip ex ea commodo consequat.
+
+Duis aute irure dolor in reprehenderit in voluptate velit
+esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
+occaeca

@@ -4,14 +4,17 @@ import random
 import time
 import os
 import json
-from utils import dividir_arquivo_em_blocos, reconstruir_arquivo, gerar_log, salvar_contagem_blocos
+from utils import dividir_pasta_em_blocos, reconstruir_arquivo, gerar_log, salvar_contagem_blocos
 
 TRACKER_HOST = 'localhost'
 TRACKER_PORT = 5000
 PEER_PORT_BASE = 6000
 
 class Peer:
-    def __init__(self, peer_id, arquivo_original='arquivo.txt'):
+    def __init__(self, peer_id, arquivo_original='arquivos/'):
+        """
+        Inicializa um peer com informações básicas, como diretório de blocos e porta específica.
+        """
         self.peer_id = peer_id
         self.bloco_dir = f'blocos_peer_{peer_id}'
         self.arquivo_original = arquivo_original
@@ -28,6 +31,9 @@ class Peer:
         self.BLOCKS = []
 
     def set_blocks_total_dynamic(self, max_retries=10, retry_delay=3):
+        """
+        Define dinamicamente o total de blocos lendo do arquivo block_count.txt.
+        """
         attempts = 0
         while attempts < max_retries:
             try:
@@ -59,6 +65,9 @@ class Peer:
         return False
 
     def load_blocks(self, max_retries=10, retry_delay=3):
+        """
+        Carrega blocos existentes no diretório local do peer.
+        """
         attempts = 0
         while attempts < max_retries:
             if not os.path.exists(self.bloco_dir):
@@ -76,6 +85,9 @@ class Peer:
         return False
 
     def save_block(self, block_name, data):
+        """
+        Salva bloco recebido no diretório local.
+        """
         caminho = os.path.join(self.bloco_dir, block_name)
         with open(caminho, 'wb') as f:
             f.write(data)
@@ -84,6 +96,9 @@ class Peer:
         gerar_log(f"[Peer {self.peer_id}] Salvou bloco {block_name}")
 
     def reconstruct_file(self):
+        """
+        Reconstrói arquivo original a partir dos blocos recebidos.
+        """
         with self.lock:
             total_blocks = len(self.blocks)
             blocks_total = self.BLOCKS_TOTAL
@@ -92,6 +107,9 @@ class Peer:
             gerar_log(f"[Peer {self.peer_id}] Arquivo reconstruído com sucesso.")
 
     def register_to_tracker(self, max_retries=10, retry_delay=3):
+        """
+        Registra o peer e seus blocos no tracker.
+        """
         retries = 0
         while retries < max_retries:
             try:
@@ -128,6 +146,9 @@ class Peer:
         return False
 
     def update_peer_blocks(self):
+        """
+        Atualiza o mapa de blocos possuídos pelos peers conhecidos.
+        """
         for peer in list(self.known_peers):
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -148,6 +169,9 @@ class Peer:
                         self.known_peers.remove(peer)
 
     def calculate_rarest_blocks(self):
+        """
+        Calcula e retorna os blocos mais raros na rede.
+        """
         frequency = {}
         with self.lock:
             for blocks in self.peer_blocks_map.values():
@@ -160,6 +184,9 @@ class Peer:
         return [b for b, _ in rarest]
 
     def select_peers_for_unchoke(self):
+        """
+        Seleciona peers para desbloquear baseado nos blocos raros que eles têm.
+        """
         with self.lock:
             rarest_blocks = self.calculate_rarest_blocks()
             peer_scores = {}
@@ -180,6 +207,9 @@ class Peer:
             gerar_log(f"[Peer {self.peer_id}] Peers choked (bloqueados): {self.choked_peers}")
 
     def unchoke_loop(self):
+        """
+        Loop contínuo para atualizar peers desbloqueados e bloqueados periodicamente.
+        """
         gerar_log(f"[Peer {self.peer_id}] Iniciando unchoke loop")
         while True:
             try:
@@ -191,6 +221,9 @@ class Peer:
             time.sleep(10)
 
     def check_have(self, peer, block):
+        """
+        Verifica se um peer específico tem um bloco desejado.
+        """
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(5)
@@ -203,6 +236,9 @@ class Peer:
             return False
 
     def request_block(self, peer, block):
+        """
+        Solicita um bloco específico a um peer desbloqueado.
+        """
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(10)
@@ -227,7 +263,9 @@ class Peer:
             return False
 
     def try_download_block(self, peer, max_retries=3):
-        # Copiar para fora do lock para evitar deadlock
+        """
+        Tenta baixar blocos sugeridos ou raros de um peer específico.
+        """
         with self.lock:
             suggested_blocks = list(self.suggested_blocks) if hasattr(self, 'suggested_blocks') else []
             current_blocks = set(self.blocks)
@@ -264,6 +302,9 @@ class Peer:
         gerar_log(f"[Peer {self.peer_id}] Nenhum bloco baixado do peer {peer} nesta tentativa.")
 
     def server_thread(self):
+        """
+        Inicia o servidor local do peer para atender requisições.
+        """
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind(('localhost', self.port))
         server.listen()
@@ -273,6 +314,9 @@ class Peer:
             threading.Thread(target=self.handle_peer_connection, args=(conn,), daemon=True).start()
 
     def handle_peer_connection(self, conn):
+        """
+        Trata requisições recebidas de outros peers.
+        """
         try:
             msg = conn.recv(1024).decode()
             gerar_log(f"[Peer {self.peer_id}] Mensagem recebida no handle_peer_connection: {msg}")
@@ -311,9 +355,12 @@ class Peer:
             conn.close()
 
     def run(self):
+        """
+        Método principal para inicializar o peer e começar o processo de download e compartilhamento.
+        """
         gerar_log(f"[Peer {self.peer_id}] Iniciando execução principal")
         if self.peer_id == 0:
-            dividir_arquivo_em_blocos(self.arquivo_original, self.bloco_dir, tamanho_bloco=1024)
+            dividir_pasta_em_blocos(self.arquivo_original, self.bloco_dir, tamanho_bloco=1024)
         if not self.set_blocks_total_dynamic():
             gerar_log(f"[Peer {self.peer_id}] Falha ao definir total de blocos, encerrando.")
             return
@@ -324,6 +371,11 @@ class Peer:
         threading.Thread(target=self.server_thread, daemon=True).start()
         threading.Thread(target=self.unchoke_loop, daemon=True).start()
         gerar_log(f"[Peer {self.peer_id}] Threads de servidor e unchoke iniciadas")
+
+        time.sleep(10)  # <<<<< Aqui espera inicial
+
+        max_attempts = 10
+        attempts = 0
 
         while True:
             if self.BLOCKS_TOTAL is None:
@@ -367,4 +419,8 @@ if __name__ == '__main__':
     import sys
     peer_id = int(sys.argv[1]) if len(sys.argv) > 1 else 0
     peer = Peer(peer_id)
-    peer.run()
+    try:
+        peer.run()
+    except KeyboardInterrupt:
+        gerar_log(f"[Peer {peer.peer_id}] Encerrado manualmente com CTRL+C. Até mais!")
+        sys.exit(0)

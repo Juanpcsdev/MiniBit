@@ -1,25 +1,29 @@
 import os
 
-def dividir_arquivo_em_blocos(caminho_arquivo, pasta_saida, tamanho_bloco=1024):
-    """
-    Divide um arquivo em blocos de tamanho fixo e salva na pasta de saída.
-    Cada bloco é salvo como block_0, block_1, ...
-    """
+# Divide uma pasta contendo arquivos em blocos numerados sequencialmente
+def dividir_pasta_em_blocos(pasta_origem, pasta_saida, tamanho_bloco=1024):
+    # Cria pasta de saída se não existir
     if not os.path.exists(pasta_saida):
         os.makedirs(pasta_saida)
 
-    with open(caminho_arquivo, 'rb') as f:
-        bloco_num = 0
-        while True:
-            dados = f.read(tamanho_bloco)
-            if not dados:
-                break
-            caminho_bloco = os.path.join(pasta_saida, f'block_{bloco_num}')
-            with open(caminho_bloco, 'wb') as bf:
-                bf.write(dados)
-            bloco_num += 1
-    print(f"[UTILS] Arquivo dividido em {bloco_num} blocos na pasta {pasta_saida}")
+    bloco_num = 0  # Contador para numerar os blocos
+    for root, dirs, files in os.walk(pasta_origem):
+        # Percorre arquivos da pasta de origem
+        for arquivo in files:
+            caminho_completo = os.path.join(root, arquivo)
+            with open(caminho_completo, 'rb') as f:
+                while True:
+                    dados = f.read(tamanho_bloco)
+                    if not dados:
+                        break
+                    nome_bloco = f'block_{bloco_num}'
+                    caminho_bloco = os.path.join(pasta_saida, nome_bloco)
+                    with open(caminho_bloco, 'wb') as bf:
+                        bf.write(dados)
+                    bloco_num += 1
+    print(f"[UTILS] Pasta dividida em {bloco_num} blocos na pasta {pasta_saida}")
 
+# Salva a contagem total dos blocos em um arquivo de texto
 def salvar_contagem_blocos(pasta_blocos, arquivo_contagem='block_count.txt'):
     blocos = [b for b in os.listdir(pasta_blocos) if b.startswith('block_') and b != arquivo_contagem]
     total = len(blocos)

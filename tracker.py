@@ -4,11 +4,24 @@ import random
 import json
 from utils import gerar_log
 
-PEERS = set()  # agora com (ip, porta_de_escuta)
+# Conjunto de peers ativos: (ip, porta)
+PEERS = set()
+
+# Mapeia cada peer para os blocos que ele possui
+PEER_BLOCKS = {}
+
+# Lock para sincronizar o acesso concorrente
 LOCK = threading.Lock()
-PEER_BLOCKS = {}  # (ip, porta_de_escuta) -> set de blocos que o peer possui
 
 def handle_client(conn, addr):
+    """
+    Gerencia as requisições recebidas dos peers.
+
+    Tipos de requisição:
+    - REGISTER: registra um novo peer e seus blocos iniciais
+    - GET_PEERS: retorna peers conhecidos e blocos sugeridos para download
+    - UPDATE_BLOCKS: atualiza blocos que um peer possui
+    """
     global PEERS, PEER_BLOCKS
     try:
         data = conn.recv(4096).decode()
@@ -32,8 +45,11 @@ def handle_client(conn, addr):
         elif data == 'GET_PEERS':
             with LOCK:
                 available_peers = [p for p in PEERS if p != addr]
+
+                # Limita o número de peers retornados (máximo 5)
                 peers_response = available_peers if len(available_peers) <= 5 else random.sample(available_peers, 5)
 
+                # Determina os blocos mais raros entre os peers
                 all_blocks = []
                 for blocks in PEER_BLOCKS.values():
                     all_blocks.extend(blocks)
@@ -51,11 +67,10 @@ def handle_client(conn, addr):
             gerar_log(f"[TRACKER] Enviou peers e blocos sugeridos para {addr}")
 
         elif data.startswith('UPDATE_BLOCKS'):
-            # Atualiza blocos do peer (usando o addr da conexão pode ser impreciso, mas mantemos por compatibilidade)
             blocks_str = data[len('UPDATE_BLOCKS '):]
             blocks = set(blocks_str.split(',')) if blocks_str else set()
             with LOCK:
-                # tenta achar peer correto pelo IP, atualiza todos que tem o IP (se houver mais de um na rede)
+                # Atualiza blocos de todos os peers com mesmo IP
                 peers_to_update = [p for p in PEERS if p[0] == addr[0]]
                 for p in peers_to_update:
                     PEER_BLOCKS[p] = blocks
